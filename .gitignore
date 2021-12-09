@@ -68,3 +68,7 @@ ha/*.env
 
 # webstorm files
 .idea/
+.vscode/
+
+#npm
+.npmrc

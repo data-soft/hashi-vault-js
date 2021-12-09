@@ -14,6 +14,7 @@ const config = {
   sysMetricFormats: [ "prometheus" ],
   sysSeal: '/sys/seal',
   sysUnseal: '/sys/unseal',
+  sysUnwrap: '/sys/wrapping/unwrap',
   tokenCreate: '/auth/token/create',
   tokenCreateOrphan: '/auth/token/create-orphan',
   tokenCreateRole: '/auth/token/create',
@@ -92,6 +93,18 @@ const config = {
   kvUndeleteSecret: ['undelete', 'post'],
   kvDestroySecret: ['destroy', 'post'],
   kvListSecrets: ['metadata', 'list'],
+  databaseRootPath: 'database',
+  databaseCreateDynamicSecret: [ 'creds', 'get'],
+  databaseCreateStaticSecret: ['static-creds', 'get'],
+  transitRootPath: 'transit',
+  transitEncrypt: ['encrypt', 'post'],
+  transitDecrypt: ['decrypt', 'post'],
+  transitRandomBytes: ['random', 'post'],
+  transitHash: ['hash', 'post'],
+  transitHmac: ['hmac', 'post'],
+  transitSign: ['sign', 'post'],
+  transitVerify: ['verify', 'post']
+  
 };
 
 module.exports = config;

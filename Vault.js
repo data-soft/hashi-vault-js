@@ -344,6 +344,28 @@ class Vault {
     }
   }
 
+  /**
+   * 
+   */ 
+  async sysUnwrap(token, wrappedToken) {
+    const Options = {
+      url: config.sysUnwrap,
+      method: 'post',
+      headers: {
+        'X-Vault-Token': token,
+      },
+      data: {
+        token: wrappedToken,
+      },
+    };
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch (err) {
+      throw parseAxiosError(err);
+    }
+  }
 
   //
   // Token auth method API endpoints
@@ -2987,6 +3009,469 @@ class Vault {
     }
   }
 
+  /**
+   * Generate a new set of dynamic credentials based on the named role
+   * 
+   * @param {String} token 
+   * @param {String} name 
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+  async generateDatabaseDynamicSecret(token, name, mount) {
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.databaseRootPath;
+    }
+    
+    const Options = {
+      url: `${rootPath}/${config.databaseCreateDynamicSecret[0]}/${name}`,
+      method: config.databaseCreateDynamicSecret[1],
+      headers: {
+        "X-Vault-Token": token
+      }
+    };
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+  }
+
+  /**
+   * Generate a new set of static credentials based on the named role
+   * 
+   * @param {String} token 
+   * @param {String} name 
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+   async generateDatabaseStaticSecret(token, name, mount) {
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.databaseRootPath;
+    }
+    
+    const Options = {
+      url: `${rootPath}/${config.databaseCreateStaticSecret[0]}/${name}`,
+      method: config.databaseCreateStaticSecret[1],
+      headers: {
+        "X-Vault-Token": token
+      }
+    };
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+  }
+
+  /**
+   * Encrypts the provide plain text using the named key.
+   * 
+   * @param {String} token
+   * @param {String} name 
+   * @param {String} params.base64EncodedText
+   * @param {String} params.context
+   * @param {String} params.key_version
+   * @param {String} params.nonce
+   * @param {Object} [params.batch_input]
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+  async encryptData(token, name, params, mount) {
+    assert(name, 'encryptData: required parameter missing: name');
+
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const {base64EncodedText, context, key_version, nonce, 
+            batch_input, type, convergent_encryption } = params
+
+
+    const Options = {
+      url: `${rootPath}/${config.transitEncrypt[0]}/${name}`,
+      method: config.transitEncrypt[1],
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        plaintext: base64EncodedText,
+        context,
+        key_version,
+        nonce,
+        batch_input,
+        type,
+        convergent_encryption
+      }
+    };
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+  }
+
+  /**
+   * Decrypts the provided ciphertext using the named key.
+   * 
+   * @param {String} token 
+   * @param {String} name 
+   * @param {String} params.ciphertext 
+   * @param {String} params.context 
+   * @param {String} params.nonce 
+   * @param {Object} [params.batch_input]
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+  async decryptData(token, name, params, mount) {
+    assert(name, 'decryptData: required parameter missing: name');
+
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const {ciphertext, context, nonce, batch_input} = params;
+    
+    const Options = {
+      url: `${rootPath}/${config.transitDecrypt[0]}/${name}`,
+      method: config.transitDecrypt[1],
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        ciphertext,
+        context,
+        nonce,
+        batch_input
+      }
+    };
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+  }
+
+  /**
+   * Returns high-quality random bytes of the specified length.
+   * 
+   * @param {String} token 
+   * @param {Number} params.bytes
+   * @param {String} params.format
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+  async randomBytes(token, params, mount) {
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const { bytes, format } = params;
+
+    const url = bytes ? `${rootPath}/${config.transitRandomBytes[0]}/${bytes}` : `${rootPath}/${config.transitRandomBytes[0]}`;
+
+    const Options = {
+      url,
+      method: 'post',
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        format
+      }
+    }
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+
+  }
+
+  /**
+   *  Returns the cryptographic hash of given data using the specified algorithm.
+   * 
+   * @param {String} token 
+   * @param {String} params.base64EncodedText
+   * @param {hash_algorithms} params.algorithm
+   * @param {hash_encoding} params.format 
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+  async hashData(token, params, mount) {
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const {base64EncodedText, algorithm, format  } = params;
+
+    const Options = {
+      url: `${rootPath}/${config.transitHash[0]}`,
+      method: 'post',
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        input: base64EncodedText,
+        algorithm,
+        format
+      }
+    }
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+
+  }
+
+  /**
+   * 
+   * @param {String} token 
+   * @param {String} name 
+   * @param {String} params.base64EncodedText
+   * @param {Number} params.key_version
+   * @param {hash_algorithms} params.algorithm
+   * @param {String} [params.batch_input]
+   * @param {String} mount 
+   * @returns {Promise<Object>}
+   */
+  async generateHmac(token, name, params, mount) {
+    assert(name, 'generateHmac: required parameter missing: name');
+
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const { base64EncodedText, key_version, algorithm, batch_input} = params;
+
+    const Options = {
+      url: `${rootPath}/${config.transitHmac[0]}/${name}`,
+      method: 'post',
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        input: base64EncodedText,
+        batch_input,
+        key_version,
+        algorithm
+      }
+    }
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+
+  }
+
+ /**
+  * Returns the cryptographic signature of the given data using the named key and the specified hash algorithm. 
+  * The key must be of a type that supports signing.
+  * 
+  * @param {String} token 
+  * @param {String} name 
+  * @param {String} params.base64EncodedText
+  * @param {Number} params.key_version
+  * @param {hash_algorithms} params.hash_algorithm
+  * @param {String} [batch_input]
+  * @param {String} params.base64EncodedContext
+  * @param {Boolean} params.prehashed
+  * @param {signature_algorithms} params.signature_algorithm
+  * @param {marshaling_algorithms} params.marshaling_algorithm
+  * @param {String} mount 
+  * @returns {Promise<Object>}
+  */
+  async signData(token, name, params, mount) {
+    assert(name, 'signData: required parameter missing: name');
+
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const { base64EncodedText, key_version, hash_algorithm, batch_input, 
+      base64EncodedContext, prehashed, signature_algorithm, marshaling_algorithm} = params;
+
+    const Options = {
+      url: `${rootPath}/${config.transitSign[0]}/${name}`,
+      method: 'post',
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        input: base64EncodedText,
+        batch_input,
+        key_version,
+        hash_algorithm,
+        context: base64EncodedContext,
+        prehashed,
+        signature_algorithm,
+        marshaling_algorithm
+      }
+    }
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+
+  }
+
+  /**
+  * Returns whether the provided signature is valid for the given data.
+  * 
+  * @param {String} token 
+  * @param {String} name 
+  * @param {String} params.base64EncodedText
+  * @param {hash_algorithms} params.hash_algorithm
+  * @param {String} params.signature
+  * @param {String} params.hmac
+  * @param {String} [batch_input]
+  * @param {String} params.base64EncodedContext
+  * @param {Boolean} params.prehashed
+  * @param {signature_algorithms} params.signature_algorithm
+  * @param {marshaling_algorithms} params.marshaling_algorithm
+  * @param {String} mount 
+  * @returns {Promise<Object>}
+  */
+   async verifySignedData(token, name, params, mount) {
+    assert(name, 'verifySignedData: required parameter missing: name');
+
+    let rootPath = "";
+    if (mount) {
+      rootPath = mount;
+    } else if (this.rootPath) {
+      rootPath = this.rootPath;
+    } else {
+      rootPath = config.transitRootPath;
+    }
+
+    const { base64EncodedText, hash_algorithm, signature, hmac, batch_input, 
+      base64EncodedContext, prehashed, signature_algorithm, marshaling_algorithm } = params;
+
+    const Options = {
+      url: `${rootPath}/${config.transitVerify[0]}/${name}`,
+      method: 'post',
+      headers: {
+        "X-Vault-Token": token
+      },
+      data: {
+        input: base64EncodedText,
+        batch_input,
+        hash_algorithm,
+        signature,
+        hmac,
+        context: base64EncodedContext,
+        prehashed,
+        signature_algorithm,
+        marshaling_algorithm
+      }
+    }
+
+    try {
+      const response = await this.instance(Options);
+      return parseAxiosResponse(response);
+    } catch(err) {
+      throw parseAxiosError(err);
+    }
+
+  }
+
+  static get HASH_ALGORITHMS() {
+    return hash_algorithms;
+  }
+
+  static get HASH_FORMAT_ENCODING() {
+    return hash_encoding;
+  }
+
+  static get SIGNATURE_ALGORITHMS() {
+    return signature_algorithms;
+  }
+
+  static get MARSHALING_ALGORITHMS() {
+    return marshaling_algorithms;
+  }
+
+
 }
+
+const hash_algorithms = Object.freeze({
+  SHA224: 'sha2-224',
+  SHA256: 'sha2-256',
+  SHA384: 'sha2-384',
+  SHA512: 'sha2-512',
+});
+
+const hash_encoding = Object.freeze({
+  HEX: 'hex',
+  BASE64: 'base64'
+});
+
+const signature_algorithms = Object.freeze({
+  PSS: 'pss',
+  PKCS1V15: 'pkcs1v15'
+});
+
+const marshaling_algorithms = Object.freeze({
+  ASN1: 'asn1',
+  JWS: 'jws'
+});
 
 module.exports = Vault;
